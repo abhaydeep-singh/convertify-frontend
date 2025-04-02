@@ -7,6 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Button } from "./components/ui/button";
+import { Progress } from "@/components/ui/progress"
+
 
 
 const App: React.FC = () => {
@@ -59,15 +62,21 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 border rounded-lg shadow-lg bg-white">
+
+    <div className="bg-black h-screen flex flex-col gap-3 md:gap-16 justify-center items-center">
+
+      <h1 className="text-yellow-400 font-bold text-2xl md:text-6xl">CONVERTIFY</h1>
+      <div className="w-[80%] md:w-[30%] mx-auto p-4 rounded-lg shadow-lg text-yellow-300 bg-gray-700">
       <h2 className="text-xl font-bold mb-4">Video Converter</h2>
       <input type="file" onChange={handleFileChange} className="mb-4 w-full p-2 border rounded" />
-      <button onClick={handleUpload} className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
+     <div className="flex gap-4">
+     <Button onClick={handleUpload} className="bg-yellow-300 text-black hover:text-white">Upload & Convert</Button>
+      {/* <button  className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
         Upload & Convert
-      </button>
+      </button> */}
       <Select value={outputFormat} onValueChange={setOutputFormat}>
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Output" />
+          <SelectValue placeholder={<span className="text-yellow-400">Output</span>}/>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="mp4">MP4</SelectItem>
@@ -85,9 +94,13 @@ const App: React.FC = () => {
           {/* <SelectItem value="system">System</SelectItem> */}
         </SelectContent>
       </Select>
-
-      {progress > 0 && <p className="mt-4">Progress: {progress}%</p>}
-      {downloadUrl && <a href={downloadUrl} download className="text-blue-500 underline">Download Converted Video</a>}
+     </div>
+    </div>
+    <div className="progress w-[40%] ">
+    {progress > 0 && <p className="mt-4 text-yellow-300">Progress: {progress}%</p>}
+    {progress > 0 && <Progress className="text-white bg-yellow-300" value={progress} />}
+    </div>
+    {downloadUrl && <a href={downloadUrl} download className="text-blue-500 underline">Download Converted Video</a>}
     </div>
   );
 };
