@@ -18,15 +18,17 @@ const App: React.FC = () => {
   const [progress, setProgress] = useState<number>(0);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [outputFormat,setOutputFormat] = useState<string | undefined>("");
-
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const WSUrl = import.meta.env.VITE_WS_URL;
+  
   useEffect(() => {
     if (!jobId) return;
 
-    const ws = new WebSocket(`ws://localhost:8080?jobId=${jobId}`);
+    const ws = new WebSocket(`${WSUrl}?jobId=${jobId}`);
     ws.onmessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
       if (data.progress) setProgress(parseFloat(data.progress));
-      if (data.status === "done") setDownloadUrl(`http://localhost:5000${data.download}`); // it will get /download/${jobid}/${outputFormat} from backend
+      if (data.status === "done") setDownloadUrl(`${apiUrl}${data.download}`); // it will get /download/${jobid}/${outputFormat} from backend
     };
 
     return () => ws.close();
@@ -49,7 +51,7 @@ const App: React.FC = () => {
 
     try {
       console.log("output format: ",outputFormat)
-      const response = await axios.post<{ jobId: string }>(`http://localhost:5000/upload/${outputFormat}`, formData, {
+      const response = await axios.post<{ jobId: string }>(`${apiUrl}/upload/${outputFormat}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
