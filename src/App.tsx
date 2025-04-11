@@ -1,5 +1,7 @@
 import { useState, useEffect, ChangeEvent } from "react";
 import axios from "axios";
+import { Button } from "./components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -7,8 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "./components/ui/button";
-import { Progress } from "@/components/ui/progress";
+
+import { Upload, Download, FileVideo } from "lucide-react";
+import { motion } from "framer-motion";
 
 const App: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -25,17 +28,11 @@ const App: React.FC = () => {
     if (!jobId) return;
 
     const ws = new WebSocket(`${WSUrl}?jobId=${jobId}`);
-
     ws.onmessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
       if (data.progress) setProgress(parseFloat(data.progress));
-      if (data.status === "done") {
+      if (data.status === "done")
         setDownloadUrl(`${apiUrl}${data.download}`);
-      }
-    };
-
-    ws.onerror = (e) => {
-      console.error("WebSocket error:", e);
     };
 
     return () => ws.close();
@@ -53,35 +50,22 @@ const App: React.FC = () => {
       return;
     }
 
-    if (!outputFormat) {
-      alert("Please select an output format!");
-      return;
-    }
-
     const formData = new FormData();
     formData.append("video", file);
 
     try {
       setIsUploading(true);
-      setProgress(0);
-      setDownloadUrl(null);
-      setJobId(null);
-
       const response = await axios.post<{ jobId: string }>(
         `${apiUrl}/upload/${outputFormat}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-          onUploadProgress: (event) => {
-            const percent = Math.round(
-              (event.loaded * 100) / (event.total || 1)
-            );
-            setProgress(percent);
-          },
         }
       );
 
       setJobId(response.data.jobId);
+      setProgress(0);
+      setDownloadUrl(null);
     } catch (error) {
       alert("Upload failed! Try again.");
     } finally {
@@ -90,33 +74,43 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="bg-black h-screen flex flex-col gap-3 md:gap-16 justify-center items-center">
-      <h1 className="text-yellow-400 font-bold text-2xl md:text-6xl">CONVERTIFY</h1>
+    <div className="bg-gradient-to-br from-black via-gray-900 to-black min-h-screen flex flex-col items-center justify-center text-yellow-300 p-4">
+      <h1 className="text-4xl md:text-6xl font-bold mb-10">🎬 Convertify</h1>
 
-      <div className="w-[80%] md:w-[30%] mx-auto p-4 rounded-lg shadow-lg text-yellow-300 bg-gray-700">
-        <h2 className="text-xl font-bold mb-4">Video Converter</h2>
+      <div className="bg-white/10 backdrop-blur-lg p-6 md:p-10 rounded-2xl border border-white/20 w-full max-w-xl shadow-2xl">
+        <h2 className="text-2xl font-semibold flex items-center gap-2 mb-4">
+          <FileVideo className="w-6 h-6" />
+          Video Converter
+        </h2>
 
         <input
           type="file"
           onChange={handleFileChange}
-          className="mb-2 w-full p-2 border rounded"
+          className="w-full mb-4 bg-gray-800 text-yellow-300 p-2 rounded border border-gray-600"
         />
 
-        {file && (
-          <p className="text-yellow-400 mt-1 text-sm">Selected: {file.name}</p>
+        {file && file.type.startsWith("video/") && (
+          <video
+            src={URL.createObjectURL(file)}
+            controls
+            className="mb-4 w-full rounded"
+          />
         )}
 
-        <div className="flex gap-4 mt-4 flex-wrap justify-between">
-          <Button
+        <div className="flex flex-wrap gap-4 mb-4 items-center">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleUpload}
-            className="bg-yellow-300 text-black hover:text-white"
+            className="bg-yellow-300 text-black px-4 py-2 rounded font-semibold flex items-center gap-2 hover:bg-yellow-400 transition"
           >
+            <Upload className="w-4 h-4" />
             Upload & Convert
-          </Button>
+          </motion.button>
 
           <Select value={outputFormat} onValueChange={setOutputFormat}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={<span className="text-yellow-400">Output</span>} />
+              <SelectValue placeholder="Output Format" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="mp4">MP4</SelectItem>
@@ -132,32 +126,29 @@ const App: React.FC = () => {
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      {isUploading && (
-        <div className="text-yellow-300 text-center mb-4 animate-pulse">
-          Uploading... Please wait.
-        </div>
-      )}
+        {isUploading && (
+          <p className="text-center text-yellow-400 mb-4">Uploading...</p>
+        )}
 
-      <div className="w-[80%] md:w-[40%]">
         {progress > 0 && (
           <>
-            <p className="mt-4 text-yellow-300">Progress: {progress}%</p>
-            <Progress className="text-white bg-yellow-300" value={progress} />
+            <p className="mb-2 text-yellow-400">Progress: {progress.toFixed(2)}%</p>
+            <Progress value={progress} className="bg-yellow-300" />
           </>
         )}
-      </div>
 
-      {downloadUrl && (
-        <a
-          href={downloadUrl}
-          download
-          className="text-blue-500 underline mt-4"
-        >
-          Download Converted Video
-        </a>
-      )}
+        {downloadUrl && (
+          <a
+            href={downloadUrl}
+            download
+            className="mt-4 inline-flex items-center gap-2 text-blue-400 hover:underline"
+          >
+            <Download className="w-4 h-4" />
+            Download Converted Video
+          </a>
+        )}
+      </div>
     </div>
   );
 };
