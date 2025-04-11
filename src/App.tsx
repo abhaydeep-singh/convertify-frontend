@@ -34,7 +34,7 @@ const App: React.FC = () => {
       if (data.status === "done")
         setDownloadUrl(`${apiUrl}${data.download}`);
     };
-
+ 
     return () => ws.close();
   }, [jobId]);
 
